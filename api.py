@@ -10,9 +10,11 @@ from flask import Flask, request, jsonify, render_template
 from werkzeug import secure_filename
 
 ALLOWED_EXTENSIONS = set(['NEF', 'SRW'])
+OTHER_EXTENSIONS = set(['JPEG', 'JPG'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'output/'
+app.config['HOST'] = 'http://localhost:5000/'
 app.config['MEDIA_HOST'] = 'http://localhost:5001/'
 
 
@@ -55,26 +57,77 @@ def create_directory(directory):
 
 def is_allowed(filename):
     return '.' in filename and \
-        filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1].upper() in ALLOWED_EXTENSIONS
+
+
+def is_other(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].upper() in OTHER_EXTENSIONS
+
+
+def get_pathtype(abspath):
+    if os.path.isdir(abspath):
+        return 'directory'
+    elif os.path.isfile(abspath):
+        return 'file'
+    return
+
+
+def get_filetype(abspath):
+    if is_allowed(abspath):
+        return 'raw'
+    elif is_other(abspath):
+        return 'image'
+    return
+
+
+def get_exportpath(filepath):
+    ext = os.path.splitext(filepath)[1]
+    filepath = filepath[:len(filepath) - len(ext)] + '.jpg'
+    return filepath
 
 
 @app.route("/api/", methods=['GET', 'PUT'])
 def api():
     upload_to = app.config['UPLOAD_FOLDER']
     if request.method == 'GET':
-        path = request.args.get('path')
+        path = request.args.get('path', '')
         media_host = app.config['MEDIA_HOST']
+        abspath = upload_to
+        root = None
         if path:
-            media_host = media_host + path + '/'
-            path = os.path.join(upload_to, path)
-        else:
-            path = upload_to
-        files = os.listdir(path)
-        paths = map(lambda x: os.path.join(path, x), files)
-        return jsonify(**{'results': {
-            'media_host': media_host,
-            'paths': paths,
-            'files': files}})
+            abspath = os.path.join(upload_to, path)
+            root = os.path.dirname(path)
+            if root:
+                root = app.config['HOST'] + 'api/?path=' + root
+            else:
+                root = app.config['HOST'] + 'api/'
+        paths = []
+        for filename in os.listdir(abspath):
+            filepath = os.path.join(path, filename)
+            fileabspath = os.path.join(upload_to, filepath)
+            pathtype = get_pathtype(fileabspath)
+            url = app.config['HOST'] + 'api/?path=' + filepath
+            if pathtype:
+                meta = {
+                    'path': filepath,
+                    'pathtype': pathtype,
+                    'filename': filename,
+                    'url': url
+                }
+                if pathtype == 'directory':
+                    paths.append(meta)
+                if pathtype == 'file':
+                    filetype = get_filetype(fileabspath)
+                    meta['filetype'] = filetype
+                    meta['url'] = media_host + filepath
+                    if filetype:
+                        if filetype == 'raw':
+                            meta['compressed_url'] = "%sexports/%s" % (
+                                media_host, get_exportpath(filepath))
+                        paths.append(meta)
+
+        return jsonify(**{'results': {'paths': paths, 'root': root}})
 
     elif request.method == 'PUT':
         image = request.files.get('image')
