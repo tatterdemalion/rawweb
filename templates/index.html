@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block head %}
+{{ super() }}
+<script>
+  var path = "{{ path }}";
+  $.getJSON('/api/?path=' + path, function(data){
+    var media_host = data['results']['media_host'];
+    var files = data['results']['files'];
+    var paths = data['results']['paths'];
+    for (var i=0; i<files.length; i++) {
+      $('.dirs').append('<li><a href="/?path=' + paths[i] + '">' + files[i] + '</a></li>');
+    }
+  });
+</script>
+{% endblock %}
+{% block body %}
+<ol class="dirs">
+</ol>
+{% endblock %}
