@@ -88,6 +88,32 @@ def get_jpeg_path(filepath):
     return filepath
 
 
+def create_web_formats(path):
+    upload_to = app.config['UPLOAD_FOLDER']
+    base_filename = os.path.splitext(os.path.basename(path))[0]
+    created_path = os.path.dirname(path.split(upload_to)[-1])
+    export_path = os.path.join(
+        upload_to, 'exports', created_path,
+        base_filename + '.jpg')
+    raw = Raw(filename=path)
+    create_directory(os.path.dirname(export_path))
+    raw.save_thumb(export_path)
+
+    # create thumbnails
+    thumbnail_path = os.path.join(
+        upload_to, 'thumbnails', created_path,
+        base_filename + '.jpg')
+    create_directory(os.path.dirname(thumbnail_path))
+    with Image(filename=export_path) as img:
+        width = img.size[0]
+        height = img.size[1]
+        w = 500
+        h = int(height * (float(w) / width))
+        with img.clone() as i:
+            i.sample(w, h)
+            i.save(filename=thumbnail_path)
+
+
 @app.route("/api/", methods=['GET', 'PUT'])
 def api():
     upload_to = app.config['UPLOAD_FOLDER']
@@ -142,31 +168,11 @@ def api():
             created_path = get_path_by_created(created)
             filename = get_filename(secure_filename(image.filename),
                                     created)
-            base_filename = os.path.splitext(filename)[0]
             outpath = get_outpath(filename, created_path)
-            if 1:  # check_outpath(outpath):
+            if check_outpath(outpath):
                 create_directory(os.path.dirname(outpath))
                 image.save(outpath)
-                export_path = os.path.join(
-                    upload_to, 'exports', created_path,
-                    base_filename + '.jpg')
-                raw = Raw(filename=outpath)
-                create_directory(os.path.dirname(export_path))
-                raw.save_thumb(export_path)
-
-                # create thumbnails
-                thumbnail_path = os.path.join(
-                    upload_to, 'thumbnails', created_path,
-                    base_filename + '.jpg')
-                create_directory(os.path.dirname(thumbnail_path))
-                with Image(filename=export_path) as img:
-                    width = img.size[0]
-                    height = img.size[1]
-                    w = 500
-                    h = int(height * (float(w) / width))
-                    with img.clone() as i:
-                        i.sample(w, h)
-                        i.save(filename=thumbnail_path)
+                create_web_formats(outpath)
                 return jsonify(**{'results': True})
         return jsonify(**{'results': False})
 
