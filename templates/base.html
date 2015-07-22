@@ -1,12 +1,27 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  {% block head %}
-  <title>Rawganize</title>
+{% block head %}
+  <title>Raw Web</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
-  {% endblock %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <!-- Custom CSS -->
+  <style>
+    body {padding-top: 70px;}
+    .portfolio-item {margin-bottom: 25px;}
+    footer {margin: 50px 0;}
+  </style>
+{% endblock %}
 </head>
+
 <body>
   {% block body %}{% endblock %}
 </body>
-</html>
+

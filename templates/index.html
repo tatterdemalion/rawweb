@@ -4,16 +4,77 @@
 <script>
   var path = "{{ path }}";
   $.getJSON('/api/?path=' + path, function(data){
-    var media_host = data['results']['media_host'];
-    var files = data['results']['files'];
     var paths = data['results']['paths'];
-    for (var i=0; i<files.length; i++) {
-      $('.dirs').append('<li><a href="/?path=' + paths[i] + '">' + files[i] + '</a></li>');
+    var i,j,temparray,chunk = 3;
+    for (i=0, j=paths.length; i<j; i+=chunk) {
+      temppaths = paths.slice(i,i+chunk);
+      var div = '<div class="row">';
+      for (var k=0; k<temppaths.length; k++) {
+        var path = temppaths[k];
+        if(path.pathtype == 'directory') {
+          div += '<div class="col-md-4 portfolio-item">' +
+                 '<a href="/?path=' + path.path + '">';
+          div += '<img class="img-responsive" src="http://4.bp.blogspot.com/-FZ99t2pXdNg/U3S1TJOjVhI/AAAAAAAAAEc/DFr8Z6NAFPI/s1600/folder-icon.png" alt="">';
+          div += '</a>';
+
+          div += '<h3><a href="/?path=' + path.path + '">' + path.filename +  '</a></h3>';
+        }
+        else if (path.pathtype == 'file') {
+          div += '<div class="col-md-4 portfolio-item">' +
+               '<a href="' + path.url + '"><img class="img-responsive" src="' + path.thumbnail_url + '" alt=""></a>';
+          div += '<a href="' + path.url + '">' + path.filename + '</a>';
+          div += '<p>download</p>'
+        }
+        
+        div += '</div>';
+      }
+      div += '</div>';
+      $('.rows').append(div);
     }
   });
 </script>
 {% endblock %}
 {% block body %}
-<ol class="dirs">
-</ol>
+<!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Raw Web</a>
+            </div>
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
+
+        <!-- Page Header -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">{{ path or 'root' }}</h1>
+            </div>
+        </div>
+        <!-- /.row -->
+        <div class="rows">
+        </div>
+        <hr/>
+        <!-- Footer -->
+        <footer>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>Kopirayt &copy; Raw Web</p>
+                </div>
+            </div>
+            <!-- /.row -->
+        </footer>
+
+    </div>
+    <!-- /.container -->
 {% endblock %}

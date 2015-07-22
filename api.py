@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 import exifread
 from rawkit.raw import Raw
+from wand.image import Image
 
 from flask import Flask, request, jsonify, render_template
 from werkzeug import secure_filename
@@ -81,7 +82,7 @@ def get_filetype(abspath):
     return
 
 
-def get_exportpath(filepath):
+def get_jpeg_path(filepath):
     ext = os.path.splitext(filepath)[1]
     filepath = filepath[:len(filepath) - len(ext)] + '.jpg'
     return filepath
@@ -104,6 +105,8 @@ def api():
                 root = app.config['HOST'] + 'api/'
         paths = []
         for filename in os.listdir(abspath):
+            if filename in ['exports', 'thumbnails']:
+                continue
             filepath = os.path.join(path, filename)
             fileabspath = os.path.join(upload_to, filepath)
             pathtype = get_pathtype(fileabspath)
@@ -124,7 +127,9 @@ def api():
                     if filetype:
                         if filetype == 'raw':
                             meta['compressed_url'] = "%sexports/%s" % (
-                                media_host, get_exportpath(filepath))
+                                media_host, get_jpeg_path(filepath))
+                            meta['thumbnail_url'] = '%sthumbnails/%s' % (
+                                media_host, get_jpeg_path(filepath))
                         paths.append(meta)
 
         return jsonify(**{'results': {'paths': paths, 'root': root}})
@@ -143,10 +148,25 @@ def api():
                 create_directory(os.path.dirname(outpath))
                 image.save(outpath)
                 export_path = os.path.join(
-                    upload_to, 'exports', created_path, base_filename + '.jpg')
+                    upload_to, 'exports', created_path,
+                    base_filename + '.jpg')
                 raw = Raw(filename=outpath)
                 create_directory(os.path.dirname(export_path))
                 raw.save_thumb(export_path)
+
+                # create thumbnails
+                thumbnail_path = os.path.join(
+                    upload_to, 'thumbnails', created_path,
+                    base_filename + '.jpg')
+                create_directory(os.path.dirname(thumbnail_path))
+                with Image(filename=export_path) as img:
+                    width = img.size[0]
+                    height = img.size[1]
+                    w = 500
+                    h = int(height * (float(w) / width))
+                    with img.clone() as i:
+                        i.sample(w, h)
+                        i.save(filename=thumbnail_path)
                 return jsonify(**{'results': True})
         return jsonify(**{'results': False})
 
