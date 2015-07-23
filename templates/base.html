@@ -11,8 +11,10 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.8.1/css/lightbox.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.0.1/min/dropzone.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.0.1/min/dropzone.min.js"></script>
   <!-- Custom CSS -->
   <style>
     body {padding-top: 70px;}
@@ -21,6 +23,22 @@
     .lb-caption a {color: white; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;}
     footer {margin: 50px 0;}
   </style>
+  <script>
+  Dropzone.options.upload = {
+    method: "put",
+    paramName: "image",
+    maxFilesize: 30, // MB
+    accept: function(file, done) {
+      var ext = file.name.split('.').pop();
+      if (ext == "NEF" || ext == "SRW") {
+        done();
+      }
+      else {  
+        done("Please upload only supported raw images. (NEF, SRW)");
+      }
+    }
+  };
+  </script>
 {% endblock %}
 </head>
 
