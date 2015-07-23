@@ -96,10 +96,14 @@ def create_web_formats(path):
     export_path = os.path.join(
         upload_to, 'exports', created_path,
         base_filename + '.jpg')
+    if os.path.exists(export_path):
+        return
     raw = Raw(filename=path)
     create_directory(os.path.dirname(export_path))
-    raw.save_thumb(export_path)
-
+    try:
+        raw.save_thumb(export_path)
+    except:
+        return
     # create thumbnails
     thumbnail_path = os.path.join(
         upload_to, 'thumbnails', created_path,
