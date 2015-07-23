@@ -22,9 +22,10 @@
         }
         else if (path.pathtype == 'file') {
           div += '<div class="col-md-4 portfolio-item">' +
-               '<a href="' + path.url + '"><img class="img-responsive" src="' + path.thumbnail_url + '" alt=""></a>';
-          div += '<a href="' + path.url + '">' + path.filename + '</a>';
-          div += '<p>download</p>'
+            '<a href="' + path.compressed_url + '" data-lightbox="folder"' +
+            ' data-title="<a href=\'' + path.compressed_url + '\' target=\'blank\'>download JPEG</a><br/><a href=\'' + path.url + '\'>download RAW</a>">' +
+            '<img class="img-responsive" src="' + path.thumbnail_url + '" alt=""></a>';
+          div += '<div><a href="' + path.compressed_url + '" target="blank">download JPEG</a><br/><a href="' + path.url + '">download RAW</a></div>'
         }
         
         div += '</div>';
