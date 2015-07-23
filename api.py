@@ -17,6 +17,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'output/'
 app.config['HOST'] = 'http://localhost:5000/'
 app.config['MEDIA_HOST'] = 'http://localhost:5001/'
+app.config.from_envvar('RAWWEB_SETTINGS')
 
 
 def get_metadata(stream):
