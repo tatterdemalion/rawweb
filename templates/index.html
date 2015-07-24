@@ -3,7 +3,6 @@
 {{ super() }}
 <script>
   var path = "{{ path }}";
-  var media_host = "{{ media_host }}";
   $.getJSON('/api/?path=' + path, function(data){
     var paths = data['results']['paths'];
     var i,j,temparray,chunk = 3;
@@ -15,7 +14,7 @@
         if(path.pathtype == 'directory') {
           div += '<div class="col-md-4 portfolio-item">' +
                  '<a href="/?path=' + path.path + '">';
-          div += '<img class="img-responsive" src="' + media_host + '/static/folder-icon.png" alt="">';
+          div += '<img class="img-responsive" src="/static/folder-icon.png" alt="">';
           div += '</a>';
 
           div += '<h3><a href="/?path=' + path.path + '">' + path.filename +  '</a></h3>';

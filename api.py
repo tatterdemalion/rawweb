@@ -185,8 +185,7 @@ def api():
 @app.route("/")
 def index():
     path = request.args.get('path', '')
-    media_host = app.config['MEDIA_HOST']
-    return render_template('index.html', path=path, media_host=media_host)
+    return render_template('index.html', path=path)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
