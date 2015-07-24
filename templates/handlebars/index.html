@@ -1,0 +1,28 @@
+<script id="file-template" type="text/x-handlebars-template">
+  <div class="col-md-4 portfolio-item">
+    <a href="{% raw %}{{ compressed_url }}{% endraw %}"
+      data-lightbox="folder" 
+      data-title="
+          <a href='{% raw %}{{ compressed_url }}{% endraw %}' target='blank'>download JPEG</a><br/>
+          <a href='{% raw %}{{ url }}{% endraw %}'>download RAW</a>">
+        <img class="img-responsive" src="{% raw %}{{ thumbnail_url }}{% endraw %}" alt="">
+    </a>
+    <div>
+      <a href="{% raw %}{{ compressed_url }}{% endraw %}" target="blank">download JPEG</a>
+      <br>
+      <a href="{% raw %}{{ url }}{% endraw %}">download RAW</a>
+    </div>
+  </div>
+</script>
+
+<script id="folder-template" type="text/x-handlebars-template">
+  <div class="col-md-4 portfolio-item">
+    <a href="/?path={% raw %}{{ path }}{% endraw %}">
+        <img class="img-responsive" src="{{url_for('static', filename='folder-icon.png')}}" alt="">
+    </a>
+    <div>
+      <h3><a href="/?path={% raw %}{{ path }}{% endraw %}" target="blank">{% raw %}{{ filename }}{% endraw %}</a></h3>
+    </div>
+  </div>
+</script>
+
