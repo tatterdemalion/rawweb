@@ -12,6 +12,7 @@ from werkzeug import secure_filename
 
 ALLOWED_EXTENSIONS = set(['NEF', 'SRW'])
 OTHER_EXTENSIONS = set(['JPEG', 'JPG'])
+ESCAPE_FILES = set(['exports', 'thumbnails', '.DS_Store'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'output/'
@@ -48,10 +49,6 @@ def get_path_by_created(created):
                         str(created.day))
 
 
-def check_outpath(path):
-    return not os.path.exists(path)
-
-
 def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -72,14 +69,6 @@ def get_pathtype(abspath):
         return 'directory'
     elif os.path.isfile(abspath):
         return 'file'
-    return
-
-
-def get_filetype(abspath):
-    if is_allowed(abspath):
-        return 'raw'
-    elif is_other(abspath):
-        return 'image'
     return
 
 
@@ -119,24 +108,28 @@ def create_web_formats(path):
             i.save(filename=thumbnail_path)
 
 
+def get_root(path):
+    if path:
+        root = app.config['HOST'] + 'api/'
+        if os.path.dirname(path):
+            return root + '?path=' + os.path.dirname(root)
+        return root
+    return
+
+
+def get_media_url(path):
+    return app.config['MEDIA_HOST'] + path
+
+
 @app.route("/api/", methods=['GET', 'PUT'])
 def api():
     upload_to = app.config['UPLOAD_FOLDER']
     if request.method == 'GET':
         path = request.args.get('path', '')
         media_host = app.config['MEDIA_HOST']
-        abspath = upload_to
-        root = None
-        if path:
-            abspath = os.path.join(upload_to, path)
-            root = os.path.dirname(path)
-            if root:
-                root = app.config['HOST'] + 'api/?path=' + root
-            else:
-                root = app.config['HOST'] + 'api/'
         paths = []
-        for filename in os.listdir(abspath):
-            if filename in ['exports', 'thumbnails']:
+        for filename in os.listdir(os.path.join(upload_to, path)):
+            if filename in ESCAPE_FILES:
                 continue
             filepath = os.path.join(path, filename)
             fileabspath = os.path.join(upload_to, filepath)
@@ -152,18 +145,15 @@ def api():
                 if pathtype == 'directory':
                     paths.append(meta)
                 if pathtype == 'file':
-                    filetype = get_filetype(fileabspath)
-                    meta['filetype'] = filetype
-                    meta['url'] = media_host + filepath
-                    if filetype:
-                        if filetype == 'raw':
-                            meta['compressed_url'] = "%sexports/%s" % (
-                                media_host, get_jpeg_path(filepath))
-                            meta['thumbnail_url'] = '%sthumbnails/%s' % (
-                                media_host, get_jpeg_path(filepath))
-                        paths.append(meta)
+                    meta['url'] = get_media_url(filepath)
+                    meta['compressed_url'] = "%sexports/%s" % (
+                        media_host, get_jpeg_path(filepath))
+                    meta['thumbnail_url'] = '%sthumbnails/%s' % (
+                        media_host, get_jpeg_path(filepath))
+                    paths.append(meta)
 
-        return jsonify(**{'results': {'paths': paths, 'root': root}})
+        return jsonify(
+            **{'results': {'paths': paths, 'root': get_root(path)}})
 
     elif request.method == 'PUT':
         image = request.files.get('image')
@@ -174,8 +164,8 @@ def api():
             filename = get_filename(secure_filename(image.filename),
                                     created)
             outpath = get_outpath(filename, created_path)
-            if check_outpath(outpath):
-                create_directory(os.path.dirname(outpath))
+            create_directory(os.path.dirname(outpath))
+            if not os.path.exists(outpath):
                 image.save(outpath)
                 create_web_formats(outpath)
                 return jsonify(**{'results': True})
@@ -184,8 +174,7 @@ def api():
 
 @app.route("/")
 def index():
-    path = request.args.get('path', '')
-    return render_template('index.html', path=path)
+    return render_template('index.html')
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
