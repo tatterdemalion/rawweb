@@ -153,7 +153,7 @@ def api():
                 }
                 if pathtype == 'directory':
                     paths.append(meta)
-                if pathtype == 'file':
+                if pathtype == 'file' and is_allowed(filepath):
                     meta['url'] = get_media_url(filepath)
                     meta['compressed_url'] = "%sexports/%s" % (
                         media_host, get_jpeg_path(filepath))
