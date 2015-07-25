@@ -4,11 +4,13 @@ import time
 
 from datetime import datetime
 import exifread
-from rawkit.raw import Raw
-from wand.image import Image
 
-from flask import Flask, request, jsonify, render_template, abort
+from flask import (Flask, request, jsonify, render_template, abort, url_for)
 from werkzeug import secure_filename
+
+from utils import create_directory
+import tasks
+
 
 ALLOWED_EXTENSIONS = set(['NEF', 'SRW'])
 OTHER_EXTENSIONS = set(['JPEG', 'JPG'])
@@ -49,11 +51,6 @@ def get_path_by_created(created):
                         str(created.day))
 
 
-def create_directory(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-
 def is_allowed(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].upper() in ALLOWED_EXTENSIONS
@@ -76,36 +73,6 @@ def get_jpeg_path(filepath):
     ext = os.path.splitext(filepath)[1]
     filepath = filepath[:len(filepath) - len(ext)] + '.jpg'
     return filepath
-
-
-def create_web_formats(path):
-    upload_to = app.config['UPLOAD_FOLDER']
-    base_filename = os.path.splitext(os.path.basename(path))[0]
-    created_path = os.path.dirname(path.split(upload_to)[-1])
-    export_path = os.path.join(
-        upload_to, 'exports', created_path,
-        base_filename + '.jpg')
-    if os.path.exists(export_path):
-        return
-    raw = Raw(filename=path)
-    create_directory(os.path.dirname(export_path))
-    try:
-        raw.save_thumb(export_path)
-    except:
-        return
-    # create thumbnails
-    thumbnail_path = os.path.join(
-        upload_to, 'thumbnails', created_path,
-        base_filename + '.jpg')
-    create_directory(os.path.dirname(thumbnail_path))
-    with Image(filename=export_path) as img:
-        width = img.size[0]
-        height = img.size[1]
-        w = 500
-        h = int(height * (float(w) / width))
-        with img.clone() as i:
-            i.sample(w, h)
-            i.save(filename=thumbnail_path)
 
 
 def get_root(path):
@@ -132,6 +99,7 @@ def get_absolute(path):
 
 @app.route("/api/", methods=['GET', 'PUT'])
 def api():
+    upload_to = app.config['UPLOAD_FOLDER']
     if request.method == 'GET':
         path = request.args.get('path', '')
         media_host = app.config['MEDIA_HOST']
@@ -157,8 +125,14 @@ def api():
                     meta['url'] = get_media_url(filepath)
                     meta['compressed_url'] = "%sexports/%s" % (
                         media_host, get_jpeg_path(filepath))
-                    meta['thumbnail_url'] = '%sthumbnails/%s' % (
-                        media_host, get_jpeg_path(filepath))
+                    absthumb = os.path.join(
+                        upload_to, 'thumbnails', get_jpeg_path(filepath))
+                    if os.path.exists(absthumb):
+                        meta['thumbnail_url'] = '%sthumbnails/%s' % (
+                            media_host, get_jpeg_path(filepath))
+                    else:
+                        meta['thumbnail_url'] = url_for(
+                            'static', filename='images/processing.png')
                     paths.append(meta)
 
         return jsonify(
@@ -176,7 +150,7 @@ def api():
             create_directory(os.path.dirname(outpath))
             if not os.path.exists(outpath):
                 image.save(outpath)
-                create_web_formats(outpath)
+                tasks.create_web_formats.delay(outpath, upload_to)
                 return jsonify(**{'results': True})
         return jsonify(**{'results': False})
 
