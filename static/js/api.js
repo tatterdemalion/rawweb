@@ -27,6 +27,12 @@ var reloadDirectory = function(){
       $rows.append(div);
     }
     $('.spinner').remove();
+  }).fail(function(jqXHR) {
+    if (jqXHR.status == 403) {
+        alert("Permission denied for " + window.location.search);
+    } else {
+        alert("An error occured.");
+    }
   });
 }
 

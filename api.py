@@ -7,7 +7,7 @@ import exifread
 from rawkit.raw import Raw
 from wand.image import Image
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, abort
 from werkzeug import secure_filename
 
 ALLOWED_EXTENSIONS = set(['NEF', 'SRW'])
@@ -121,18 +121,27 @@ def get_media_url(path):
     return app.config['MEDIA_HOST'] + path
 
 
+def get_absolute(path):
+    absmedia = os.path.abspath(app.config['UPLOAD_FOLDER'])
+    if not path:
+        return absmedia
+    if path and path[0] not in ['/', '..']:
+        return os.path.join(absmedia, path)
+    abort(403)
+
+
 @app.route("/api/", methods=['GET', 'PUT'])
 def api():
-    upload_to = app.config['UPLOAD_FOLDER']
     if request.method == 'GET':
         path = request.args.get('path', '')
         media_host = app.config['MEDIA_HOST']
         paths = []
-        for filename in os.listdir(os.path.join(upload_to, path)):
+        abspath = get_absolute(path)
+        for filename in os.listdir(abspath):
             if filename in ESCAPE_FILES:
                 continue
             filepath = os.path.join(path, filename)
-            fileabspath = os.path.join(upload_to, filepath)
+            fileabspath = get_absolute(filepath)
             pathtype = get_pathtype(fileabspath)
             url = app.config['HOST'] + 'api/?path=' + filepath
             if pathtype:
