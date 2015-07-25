@@ -3,6 +3,11 @@ var folderTemplateSource = $("#folder-template").html();
 var fileTemplate = Handlebars.compile(fileTemplateSource);
 var folderTemplate = Handlebars.compile(folderTemplateSource);
 
+var $rows = $('.rows');
+var opts = {scale: 5.25 }
+var spinner = new Spinner(opts).spin();
+$rows.append(spinner.el);
+
 $.getJSON('/api/' + window.location.search, function(data){
   var paths = data['results']['paths'];
   var i,j,temparray,chunk = 3;
@@ -19,7 +24,8 @@ $.getJSON('/api/' + window.location.search, function(data){
       }  
     }
     div += '</div>';
-    $('.rows').append(div);
+    $rows.append(div);
   }
+  $('.spinner').remove();
 });
 
