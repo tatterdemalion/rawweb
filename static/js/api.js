@@ -45,11 +45,14 @@ reloadDirectory();
 
 var deleteFile = function(path){
   var currentOffset = $(document).scrollTop();
-  $.ajax({
-    url: '/api/?path=' + path,
-    type: 'DELETE',
-    success: function(result) {
-        reloadDirectory(currentOffset);
-    }
-  });
+  var r = confirm("Are you sure?");
+  if(r==true){
+    $.ajax({
+      url: '/api/?path=' + path,
+      type: 'DELETE',
+      success: function(result) {
+          reloadDirectory(currentOffset);
+      }
+    });
+  }
 }

@@ -99,7 +99,7 @@ def get_absolute(path):
 
 @app.route("/api/", methods=['GET', 'PUT', 'DELETE'])
 def api():
-    upload_to = app.config['UPLOAD_FOLDER']
+    upload_to = os.path.abspath(app.config['UPLOAD_FOLDER'])
     path = request.args.get('path', '')
     abspath = get_absolute(path)
     if request.method == 'GET':
@@ -157,6 +157,9 @@ def api():
     elif request.method == 'DELETE':
         if os.path.isfile(abspath):
             os.remove(abspath)
+            os.remove(os.path.join(upload_to, 'exports', get_jpeg_path(path)))
+            os.remove(os.path.join(upload_to,
+                                   'thumbnails', get_jpeg_path(path)))
         return jsonify(**{'path': path})
 
 
