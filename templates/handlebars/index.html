@@ -1,5 +1,7 @@
 <script id="file-template" type="text/x-handlebars-template">
   <div class="col-md-4 portfolio-item">
+    <button class="btn btn-danger btn-xs btn-delete pull-right"
+      onClick="deleteFile('{% raw %}{{ path }}{% endraw %}');">x</button>
     <a href="{% raw %}{{ compressed_url }}{% endraw %}"
       data-lightbox="folder" 
       data-title="

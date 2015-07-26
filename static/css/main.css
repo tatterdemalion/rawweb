@@ -3,4 +3,5 @@ body {padding-top: 70px;}
 .lb-caption {position: absolute; top:15px; z-index:10000;}
 .lb-caption a {color: white; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;}
 .rows {min-height: 500px;}
+.btn-delete {position: relative;}
 footer {margin: 50px 0;}

@@ -3,7 +3,8 @@ var folderTemplateSource = $("#folder-template").html();
 var fileTemplate = Handlebars.compile(fileTemplateSource);
 var folderTemplate = Handlebars.compile(folderTemplateSource);
 
-var reloadDirectory = function(){
+var reloadDirectory = function(offset){
+  $('.rows .row').remove();
   var $rows = $('.rows');
   var opts = {scale: 5.25 }
   var spinner = new Spinner(opts).spin();
@@ -27,6 +28,9 @@ var reloadDirectory = function(){
       $rows.append(div);
     }
     $('.spinner').remove();
+    if (offset) {
+      $(document).scrollTop(offset);
+    }
   }).fail(function(jqXHR) {
     if (jqXHR.status == 403) {
         alert("Permission denied for " + window.location.search);
@@ -37,3 +41,15 @@ var reloadDirectory = function(){
 }
 
 reloadDirectory();
+
+
+var deleteFile = function(path){
+  var currentOffset = $(document).scrollTop();
+  $.ajax({
+    url: '/api/?path=' + path,
+    type: 'DELETE',
+    success: function(result) {
+        reloadDirectory(currentOffset);
+    }
+  });
+}

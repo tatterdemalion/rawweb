@@ -97,14 +97,14 @@ def get_absolute(path):
     abort(403)
 
 
-@app.route("/api/", methods=['GET', 'PUT'])
+@app.route("/api/", methods=['GET', 'PUT', 'DELETE'])
 def api():
     upload_to = app.config['UPLOAD_FOLDER']
+    path = request.args.get('path', '')
+    abspath = get_absolute(path)
     if request.method == 'GET':
-        path = request.args.get('path', '')
         media_host = app.config['MEDIA_HOST']
         paths = []
-        abspath = get_absolute(path)
         for filename in os.listdir(abspath):
             if filename in ESCAPE_FILES:
                 continue
@@ -153,6 +153,11 @@ def api():
                 tasks.create_web_formats.delay(outpath, upload_to)
                 return jsonify(**{'results': True})
         return jsonify(**{'results': False})
+
+    elif request.method == 'DELETE':
+        if os.path.isfile(abspath):
+            os.remove(abspath)
+        return jsonify(**{'path': path})
 
 
 @app.route("/")
