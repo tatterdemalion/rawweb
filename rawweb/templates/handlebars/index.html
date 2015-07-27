@@ -28,3 +28,10 @@
   </div>
 </script>
 
+
+<script id="photographer-option-template" type="text/x-handlebars-template">
+  <option value="{% raw %}{{ value }}{% endraw %}" 
+          {% raw %}{{#if selected}}selected{{/if}}{% endraw %}>
+    {% raw %}{{ name }}{% endraw %}
+  </option>
+</script>

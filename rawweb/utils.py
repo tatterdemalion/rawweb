@@ -9,9 +9,8 @@ def create_directory(directory):
         os.makedirs(directory)
 
 
-def create_web_formats(path, upload_to):
+def create_web_formats(path, upload_to, created_path):
     base_filename = os.path.splitext(os.path.basename(path))[0]
-    created_path = os.path.dirname(path.split(upload_to)[-1])
     export_path = os.path.join(
         upload_to, 'exports', created_path,
         base_filename + '.jpg')

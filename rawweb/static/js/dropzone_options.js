@@ -3,6 +3,9 @@ $(document).ready(function(){
     method: "put",
     paramName: "image",
     maxFilesize: 30, // MB
+    init: function() {
+      setPhotographer(getPhotographer());
+    },
     accept: function(file, done) {
       var ext = file.name.split('.').pop();
       if (ext == "NEF" || ext == "SRW") {

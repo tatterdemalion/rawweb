@@ -17,6 +17,7 @@
   <script src="{{url_for('static', filename='js/dropzone.min.js')}}"></script>
   <script src="{{url_for('static', filename='js/dropzone_options.js')}}"></script>
   <script src="{{url_for('static', filename='js/spin.min.js')}}"></script>
+  <script src="{{url_for('static', filename='js/js.cookie.js')}}"></script>
 {% endblock %}
 </head>
 
@@ -26,6 +27,13 @@
       <div class="navbar-header">
         <a class="navbar-brand" href="/">Raw Web</a>
       </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <form class="navbar-search pull-right">
+          <select class="col-md-2" id="photographers">
+              <option value="all" selected="selected">All</option>
+          </select>
+        </form>
+      </div>
     </div>
   </nav>
   <div class="container">
@@ -34,7 +42,9 @@
     <footer>
       <div class="row">
         <div class="col-lg-12">
-            <form action="/api/" class="dropzone" id="upload"></form>
+            <form action="/api/" class="dropzone" id="upload">
+              <input type="hidden" value="all" id="photographer-id" name="photographer-id"/>
+            </form>
         </div>
       </div>
     </footer>

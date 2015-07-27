@@ -1,26 +1,24 @@
 import os
 import hashlib
 import time
+import json
 
 from datetime import datetime
 import exifread
 
-from flask import (Flask, request, jsonify, render_template, abort, url_for)
+from flask import (request, jsonify, render_template, abort, url_for)
 from werkzeug import secure_filename
 
-from utils import create_directory
-import tasks
+from rawweb import app
+from rawweb import db
+from rawweb.models import Photo, Photographer
+from rawweb.utils import create_directory
+from rawweb.tasks import create_web_formats
 
 
 ALLOWED_EXTENSIONS = set(['NEF', 'SRW'])
 OTHER_EXTENSIONS = set(['JPEG', 'JPG'])
 ESCAPE_FILES = set(['exports', 'thumbnails', '.DS_Store'])
-
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'output/'
-app.config['HOST'] = 'http://localhost:5000/'
-app.config['MEDIA_HOST'] = 'http://localhost:5001/'
-app.config.from_envvar('RAWWEB_SETTINGS')
 
 
 def get_metadata(stream):
@@ -28,7 +26,8 @@ def get_metadata(stream):
     original_date = metadata['EXIF DateTimeOriginal']
     created = datetime.strptime(original_date.values, '%Y:%m:%d %H:%M:%S')
     stream.seek(0)  # make the stream reusable
-    return {'created': created}
+    metadata.update({'created': created})
+    return metadata
 
 
 def get_filename(filename, created):
@@ -97,12 +96,50 @@ def get_absolute(path):
     abort(403)
 
 
+def save_photo_2_db(path, metadata, created_path, photographer_id=None):
+    photo = Photo(id=path,
+                  photographer_id=photographer_id,
+                  taken_at=metadata['created'],
+                  size=os.path.getsize(get_absolute(path)))
+    db.session.add(photo)
+    db.session.commit()
+
+
+@app.route("/api/photographer/", methods=['GET', 'POST'])
+def api_photographer():
+    if request.method == 'GET':
+        id_ = request.args.get('id')
+        if id_:
+            photographer = Photographer.query.get(id_)
+            if photographer:
+                return jsonify(**{'results': photographer.serialize})
+            return jsonify(**{'results': False})
+        photographers = Photographer.query.all()
+        return jsonify(**{'results': [i.serialize for i in photographers]})
+
+    elif request.method == 'POST':
+        name = json.loads(request.data).get('name')
+        if name:
+            photographer = Photographer(name=name)
+            db.session.add(photographer)
+            db.session.commit()
+            return jsonify(**{'results': True})
+        return jsonify(**{'results': False})
+
+
 @app.route("/api/", methods=['GET', 'PUT', 'DELETE'])
 def api():
     upload_to = os.path.abspath(app.config['UPLOAD_FOLDER'])
     path = request.args.get('path', '')
+    photographer_id = request.args.get('photographer_id')
     abspath = get_absolute(path)
     if request.method == 'GET':
+        if photographer_id != 'NaN':
+            photos = Photo.query.filter_by(
+                photographer_id=photographer_id).all()
+        else:
+            photos = Photo.query.all()
+        photo_ids = [i.id for i in photos]
         media_host = app.config['MEDIA_HOST']
         paths = []
         for filename in os.listdir(abspath):
@@ -111,6 +148,8 @@ def api():
             filepath = os.path.join(path, filename)
             fileabspath = get_absolute(filepath)
             pathtype = get_pathtype(fileabspath)
+            if pathtype == 'file' and filepath not in photo_ids:
+                continue
             url = app.config['HOST'] + 'api/?path=' + filepath
             if pathtype:
                 meta = {
@@ -140,6 +179,9 @@ def api():
 
     elif request.method == 'PUT':
         image = request.files.get('image')
+        photographer_id = request.values.get('photographer-id')
+        if photographer_id == 'all':
+            photographer_id = None
         if image and is_allowed(image.filename):
             metadata = get_metadata(image.stream)
             created = metadata['created']
@@ -150,7 +192,10 @@ def api():
             create_directory(os.path.dirname(outpath))
             if not os.path.exists(outpath):
                 image.save(outpath)
-                tasks.create_web_formats.delay(outpath, upload_to)
+                save_photo_2_db(
+                    os.path.join(created_path, filename),
+                    metadata, created_path, photographer_id)
+                create_web_formats.delay(outpath, upload_to, created_path)
                 return jsonify(**{'results': True})
         return jsonify(**{'results': False})
 
