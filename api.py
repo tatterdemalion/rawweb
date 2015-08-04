@@ -12,7 +12,7 @@ from utils import create_directory
 import tasks
 
 
-ALLOWED_EXTENSIONS = set(['NEF', 'SRW'])
+ALLOWED_EXTENSIONS = set(['NEF', 'SRW', 'DNG'])
 OTHER_EXTENSIONS = set(['JPEG', 'JPG'])
 ESCAPE_FILES = set(['exports', 'thumbnails', '.DS_Store'])
 
