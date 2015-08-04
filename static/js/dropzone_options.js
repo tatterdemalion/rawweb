@@ -4,8 +4,8 @@ $(document).ready(function(){
     paramName: "image",
     maxFilesize: 30, // MB
     accept: function(file, done) {
-      var ext = file.name.split('.').pop();
-      if (ext == "NEF" || ext == "SRW") {
+      var ext = file.name.split('.').pop().toUpperCase();
+      if (ext == "NEF" || ext == "SRW" || ext == "DNG") {
         done();
       }
       else {  
